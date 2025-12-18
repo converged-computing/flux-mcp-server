@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 from fastapi import FastAPI
 from fastmcp.tools.tool import Tool
-from flux_mcp.registry import TOOLS
+
+from flux_mcp_server.registry import TOOLS
 
 from .app import init_mcp
 

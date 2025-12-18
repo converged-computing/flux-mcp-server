@@ -1,8 +1,9 @@
 import os
 
-import flux_mcp.version as version
 from fastmcp import FastMCP
 from mcp.types import Icon
+
+import flux_mcp_server.version as version
 
 from .middleware import TokenAuthMiddleware
 

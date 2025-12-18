@@ -12,21 +12,21 @@ This means you need flux-python (comes packaged with Flux, or `pip install flux-
 
 ### Server
 
+To start the demo server, either will work:
+
+```bash
+flux-mcp-server
+# or
+python3 -m flux_mcp_server.server
+```
+
+![img/server.png](img/server.png)
 
 ### Development
 
 ```bash
 apt-get install -y python3-build
 pyproject-build
-```
-
-To start the demo server, either will work:
-
-```bash
-
-flux-mcp-server
-# or
-python3 -m flux_mcp_server.server
 ```
 
 ### Todo
