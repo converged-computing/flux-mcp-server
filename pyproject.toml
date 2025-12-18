@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "flux-mcp-server"
+version = "0.1.0"
+description = "A server to deploy a collection of Flux MCP tools"
+dependencies = [
+    "mcp>=1.0.0",
+    "flux-mcp",
+    "fastmcp",
+    "fastapi"
+]
+
+[project.scripts]
+flux-mcp-server = "flux_mcp_server.server.__main__:main"
+
+[tool.black]
+exclude = "^env/"
+line-length = 100
+
+[tool.isort]
+profile = "black" # needed for black/isort compatibility
+line_length = 100

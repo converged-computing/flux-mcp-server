@@ -1,0 +1,6 @@
+flux_mcp_server.egg-info
+build
+dist
+env
+.eggs
+__pycache__
