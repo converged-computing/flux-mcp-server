@@ -5,7 +5,7 @@
 This library uses [flux-mcp](https://github.com/converged-computing/flux-mcp)
 ![img/flux-mcp-small.png](img/flux-mcp-small.png)
 
-See [design thinking](design.md) for an overview of design.
+See [design thinking](docs/design.md) for an overview of design.
 
 ## Usage
 
@@ -79,6 +79,8 @@ python3 ./tests/test_submit.py
 apt-get install -y python3-build
 pyproject-build
 ```
+
+![img/flux-mcp-diagram.png](img/flux-mcp-diagram.png)
 
 ### Todo
 

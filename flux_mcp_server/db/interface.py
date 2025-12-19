@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any
-from .models import JobRecord, EventRecord
+from typing import Any, Dict, List, Optional
+
+from .models import EventRecord, JobRecord
+
 
 class DatabaseBackend(ABC):
     """
@@ -19,11 +21,11 @@ class DatabaseBackend(ABC):
         pass
 
     # Write Operations (Used by Scribe/EventsEngine)
-    
+
     @abstractmethod
     async def record_event(self, cluster: str, event: Dict[str, Any]):
         """
-        Ingest a raw event. Must update both the event log 
+        Ingest a raw event. Must update both the event log
         and the current job state snapshot atomically if possible.
         """
         pass

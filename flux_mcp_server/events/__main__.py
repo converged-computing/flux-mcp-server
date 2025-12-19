@@ -4,14 +4,14 @@ import logging
 import os
 
 from flux_mcp_server.db.sqlite import JobDatabase
+
 from .events.engine import EventsEngine
 from .events.sinks import LocalDbSink, RemoteApiSink
 
+
 def setup_logging():
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s [%(levelname)s] %(message)s'
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+
 
 async def run_local(args):
     """
@@ -19,30 +19,32 @@ async def run_local(args):
     """
     db_path = os.path.abspath(args.db_path)
     logging.info(f"Starting Local EventsEngine. Cluster: {args.cluster}, DB: {db_path}")
-    
+
     db = JobDatabase(db_path)
     sink = LocalDbSink(args.cluster, db)
     engine = EventsEngine(args.uri, sink)
-    
+
     await engine.start()
-    
+
     # Block forever (the engine runs in a background thread)
     stop_event = asyncio.Event()
     await stop_event.wait()
+
 
 async def run_remote(args):
     """
     Mode 2: Run on a remote cluster, forwarding events to the MCP server.
     """
     logging.info(f"Starting Remote EventsEngine. Target: {args.server_url}")
-    
+
     sink = RemoteApiSink(args.cluster, args.server_url)
     engine = EventsEngine(args.uri, sink)
-    
+
     await engine.start()
-    
+
     stop_event = asyncio.Event()
     await stop_event.wait()
+
 
 def main():
     parser = argparse.ArgumentParser(description="Flux MCP Events Service")
@@ -70,6 +72,7 @@ def main():
             asyncio.run(run_remote(args))
     except KeyboardInterrupt:
         pass
+
 
 if __name__ == "__main__":
     main()

@@ -1,6 +1,8 @@
 from typing import Dict, Optional, Type
-from flux_mcp_server.clusters.interface import ClusterHandle, AuthContext
+
+from flux_mcp_server.clusters.interface import AuthContext, ClusterHandle
 from flux_mcp_server.clusters.local import LocalFluxHandle
+
 
 class ClusterRegistry:
     """
@@ -9,8 +11,9 @@ class ClusterRegistry:
     We need to hold state because we are listening for events OR receiving
     callbacks from clusters.
     """
+
     _instance = None
-    
+
     def __init__(self):
         self._clusters: Dict[str, ClusterHandle] = {}
 
@@ -32,17 +35,17 @@ class ClusterRegistry:
         """
         if name in self._clusters:
             raise ValueError(f"Cluster '{name}' already exists.")
-        
+
         handle_cls = self._handle_types.get(type_str)
         if not handle_cls:
             raise ValueError(f"Unknown handle type: {type_str}")
 
         # Instantiate
         handle = handle_cls(name, config)
-        
+
         # Verify connection
         if not handle.connect():
-             raise ConnectionError(f"Could not connect to {name} during registration.")
+            raise ConnectionError(f"Could not connect to {name} during registration.")
 
         self._clusters[name] = handle
         return True
@@ -63,6 +66,7 @@ class ClusterRegistry:
             name: {"type": type(h).__name__, "config": h.config}
             for name, h in self._clusters.items()
         }
+
 
 # Global Helper
 def get_registry():
