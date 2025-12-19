@@ -20,6 +20,8 @@ INSTALL_REQUIRES = (
     # For Flux
     ("pyyaml", {"min_version": None}),
     ("ply", {"min_version": None}),
+    # Databases
+    ("aiosqlite", {"min_version": None}),
 )
 
 TESTS_REQUIRES = (

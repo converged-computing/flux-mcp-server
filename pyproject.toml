@@ -10,7 +10,14 @@ dependencies = [
     "mcp>=1.0.0",
     "flux-mcp",
     "fastmcp",
-    "fastapi"
+    "fastapi",
+
+    # Database backends
+    "sqlalchemy",
+    "sqlalchemy[asyncio]",
+    "aiosqlite",
+    "asyncpg",
+    "aiomysql"
 ]
 
 [project.scripts]

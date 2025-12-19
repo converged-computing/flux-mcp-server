@@ -5,10 +5,26 @@
 This library uses [flux-mcp](https://github.com/converged-computing/flux-mcp)
 ![img/flux-mcp-small.png](img/flux-mcp-small.png)
 
+See [design thinking](design.md) for an overview of design.
+
 ## Usage
 
 This server is currently expected to be deployed on a cluster, alongside a Flux instance.
 This means you need flux-python (comes packaged with Flux, or `pip install flux-python==<version>`).
+
+### Flux Instance
+
+Let's mock a flux instance. Do a flux start in your terminal:
+
+```bash
+flux start
+```
+
+Get the `FLUX_URI` so we can connect from another terminal.
+
+```bash
+echo $FLUX_URI
+```
 
 ### Server
 
@@ -22,6 +38,41 @@ python3 -m flux_mcp_server.server
 
 ![img/server.png](img/server.png)
 
+Next we can run a test that will submit a job, and then view the event (that was saved to our database).
+In a different terminal, export the `$FLUX_URI` you saw above.
+
+```bash
+export FLUX_URI=local:///tmp/flux-aG87Ma/local-0
+```
+
+Now run the little demo:
+
+```bash
+python3 ./tests/test_submit.py
+```
+```console
+   ✅ Job ID: 359735320641536
+⏳ Waiting for events to propagate to DB...
+   found 1 events: {'submit'}
+   found 7 events: {'start', 'submit', 'depend', 'alloc', 'priority', 'validate', 'annotations'}
+   found 7 events: {'start', 'submit', 'depend', 'alloc', 'priority', 'validate', 'annotations'}
+   found 11 events: {'start', 'submit', 'free', 'depend', 'finish', 'alloc', 'priority', 'validate', 'release', 'clean', 'annotations'}
+
+📊 Event Log Analysis:
+✅ Success! Recorded 11 events for Job 359735320641536.
+   - [SUBMIT]
+   - [VALIDATE]
+   - [DEPEND]
+   - [PRIORITY]
+   - [ANNOTATIONS]
+   - [ALLOC]
+   - [START]
+   - [FINISH]
+   - [RELEASE]
+   - [FREE]
+   - [CLEAN]
+```
+
 ### Development
 
 ```bash
@@ -32,17 +83,18 @@ pyproject-build
 ### Todo
 
 - [x] Fastmcp endpoint serving Flux MCP functions
-- [ ] Handle should receive events and write to database
-- [ ] Database should be interface (and flexible to different ones)
+- [x] Handle should receive events and write to database
+- [x] Database should be interface (and flexible to different ones)
   - sqlalchemy
 - [ ] Auth should also be interface with different backends
   - Most basic is "none" that just uses the Flux handle.
   - Next is simple token, should be implemented as middleware of fastmcp
   - Then OAuth2
   - Then (custom) something with passing OAuth2-like to submit as a Flux user.
-- [ ] Example: user manually submits a job, can query database for state
+- [x] Example: user manually submits a job, can query database for state
 - [ ] Example: Agent submits work, and can find state later.
-- Migrate to container, then Flux Operator / Kubernetes service.
+- [ ] Migrate to container, then Flux Operator / Kubernetes service.
+- [ ] Tests in CI and automated build.
 
 ## License
 
