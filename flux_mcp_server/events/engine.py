@@ -1,12 +1,15 @@
-import time
 import asyncio
-import logging
 import errno
+import logging
+import time
+
 import flux
 import flux.job
+
 from flux_mcp_server.events.receiver import EventReceiver
 
 logger = logging.getLogger(__name__)
+
 
 class EventsEngine:
     def __init__(self, uri: str, receiver: EventReceiver):
@@ -19,9 +22,7 @@ class EventsEngine:
     async def start(self):
         self._running = True
         self._loop = asyncio.get_running_loop()
-        self._task = asyncio.create_task(
-            asyncio.to_thread(self._sync_listen_loop)
-        )
+        self._task = asyncio.create_task(asyncio.to_thread(self._sync_listen_loop))
         logger.info(f"EventsEngine started for {self.uri or 'local'}")
 
     async def stop(self):
@@ -41,8 +42,8 @@ class EventsEngine:
         data = dict(event)
         data["type"] = event.name
         data["id"] = event.jobid
-        data['R'] = getattr(event, "R", None)
-        data['jobspec'] = getattr(event, "jobspec", None)
+        data["R"] = getattr(event, "R", None)
+        data["jobspec"] = getattr(event, "jobspec", None)
         return data
 
     def _handle_async_error(self, future):
@@ -68,18 +69,17 @@ class EventsEngine:
                 try:
                     # Non-blocking poll
                     event = consumer.poll(timeout=0.1)
-                    
+
                     if event:
-                        logger.debug(f"Flux Event Received: {event.get('name')}")                        
+                        logger.debug(f"Flux Event Received: {event.get('name')}")
                         if not hasattr(event, "jobid"):
                             continue
                         clean_event = self._normalize_event(event)
-                        
+
                         if self._loop and self._loop.is_running():
                             # Schedule the DB write on the main loop
                             fut = asyncio.run_coroutine_threadsafe(
-                                self.receiver.send(clean_event), 
-                                self._loop
+                                self.receiver.send(clean_event), self._loop
                             )
                             # Attach a callback to log any DB errors
                             fut.add_done_callback(self._handle_async_error)

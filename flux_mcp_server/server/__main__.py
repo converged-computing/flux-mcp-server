@@ -1,42 +1,60 @@
 #!/usr/bin/env python3
 
-import uvicorn
 import argparse
 import asyncio
 import os
+import warnings
 from contextlib import asynccontextmanager
+
+import uvicorn
+
 from flux_mcp_server.logger import logger
 
-import warnings
 # Filter specific deprecation warnings from websockets/uvicorn
-warnings.filterwarnings("ignore", category=DeprecationWarning, message="websockets.server.WebSocketServerProtocol is deprecated")
+warnings.filterwarnings(
+    "ignore",
+    category=DeprecationWarning,
+    message="websockets.server.WebSocketServerProtocol is deprecated",
+)
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="websockets.legacy")
 
 from fastapi import FastAPI
 from fastmcp.tools.tool import Tool
 
-from flux_mcp_server.registry import TOOLS
 from flux_mcp_server.db import get_db
 from flux_mcp_server.events.engine import EventsEngine
 from flux_mcp_server.events.receiver import LocalReceiver
+from flux_mcp_server.registry import TOOLS
+
 from .app import init_mcp
 
 
 def get_parser():
     parser = argparse.ArgumentParser(description="Flux MCP Server")
-    
+
     # Server
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
     parser.add_argument("--port", type=int, default=8089, help="Port to listen on")
-    parser.add_argument("--transport", default="http", choices=["sse", "stdio", "http"], help="MCP Transport type")
-    parser.add_argument("--mount-to", default="/mcp", help="Mount path for server (defaults to /mcp)")
-    
+    parser.add_argument(
+        "--transport", default="http", choices=["sse", "stdio", "http"], help="MCP Transport type"
+    )
+    parser.add_argument(
+        "--mount-to", default="/mcp", help="Mount path for server (defaults to /mcp)"
+    )
+
     # Database
-    parser.add_argument("--db-type", default=os.environ.get("FLUX_MCP_DATABASE") or "sqlite", choices=["sqlite", "postgres"], help="Database backend")
+    parser.add_argument(
+        "--db-type",
+        default=os.environ.get("FLUX_MCP_DATABASE") or "sqlite",
+        choices=["sqlite", "postgres"],
+        help="Database backend",
+    )
     parser.add_argument("--db-path", default="server_state.db", help="Path for SQLite database")
-    
+
     # Events / Receivers
-    parser.add_argument("--no-listener", action="store_true", help="Disable the background event listener")
+    parser.add_argument(
+        "--no-listener", action="store_true", help="Disable the background event listener"
+    )
     parser.add_argument("--flux-uri", default=None, help="FLUX_URI for the local event listener")
     return parser
 
@@ -51,17 +69,18 @@ def register_tools(server_instance):
         tool_obj = Tool.from_function(func)
         server_instance.add_tool(tool_obj)
         print(f"   ✅ Registered: {func.__name__}")
- 
+
 
 # TODO (vsoch) do we want to add other hooks?
 _HOOKS = {"instance": None}
+
 
 async def server_startup(args, db):
     """
     Shared startup logic.
     """
     print("   🚀 Server starting up...")
-    
+
     # 1. Initialize Database
     print(f"   💾 Initializing {args.db_type} database...")
     await db.initialize()
@@ -71,11 +90,12 @@ async def server_startup(args, db):
         print(f"   🎧 Starting EventsEngine (URI: {args.flux_uri or 'local'})...")
         sink = LocalReceiver("local", db)
         engine = EventsEngine(args.flux_uri, sink)
-        
+
         await engine.start()
         _HOOKS["engine"] = engine
     else:
         print("   ⚠️  Background event receiver is disabled.")
+
 
 async def server_shutdown(db):
     """
@@ -83,12 +103,13 @@ async def server_shutdown(db):
     """
     # TODO: vsoch: this doesn't exit cleanly
     # because event consumer is blocking
-    print("🛑 Server shutting down...")    
+    print("🛑 Server shutting down...")
     if _HOOKS["engine"]:
         print("   Stopping EventsEngine...")
         await _HOOKS["engine"].stop()
-    
+
     await db.close()
+
 
 def main():
     parser = get_parser()
@@ -119,12 +140,12 @@ def main():
         async def lifespan(app: FastAPI):
             # A. Custom Startup
             await server_startup(args, db)
-            
+
             # B. Chain FastMCP Startup (Required for Task Groups/SSE)
             # We use the router's context helper to activate the MCP app's internal logic
             async with mcp_app.router.lifespan_context(app):
                 yield
-            
+
             # C. Custom Shutdown
             await server_shutdown(db)
 
@@ -141,6 +162,7 @@ def main():
             print("\n👋 Shutting down...")
 
     elif args.transport == "stdio":
+
         async def run_stdio():
             await server_startup(args, db)
             try:
@@ -152,6 +174,7 @@ def main():
             asyncio.run(run_stdio())
         except KeyboardInterrupt:
             pass
+
 
 if __name__ == "__main__":
     main()

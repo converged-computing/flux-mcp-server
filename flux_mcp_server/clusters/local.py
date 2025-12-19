@@ -1,7 +1,10 @@
 import json
+
 import flux
 import flux.job
-from flux_mcp_server.clusters.interface import ClusterHandle, AuthContext
+
+from flux_mcp_server.clusters.interface import AuthContext, ClusterHandle
+
 
 class LocalFluxHandle(ClusterHandle):
     """
@@ -10,6 +13,7 @@ class LocalFluxHandle(ClusterHandle):
     This is (likely) primarily for testing, and assumes the MCP server
     is running directly on the cluster of interest.
     """
+
     def __init__(self, cluster_id: str, config: dict):
         super().__init__(cluster_id, config)
         # If unset (None) uses default local
@@ -37,7 +41,7 @@ class LocalFluxHandle(ClusterHandle):
         # 1. Auth Check (Simple single-user ownership check)
         # In a real system, you might check: if auth.user_id != os.getuid()...
         print(f"DEBUG: Submitting to {self.cluster_id} as user {auth.user_id}")
-        
+
         # 2. Parse
         if isinstance(jobspec, str):
             spec = json.loads(jobspec)
@@ -59,12 +63,7 @@ class LocalFluxHandle(ClusterHandle):
     def get_job_info(self, job_id: int, auth: AuthContext) -> dict:
         info = flux.job.get_job_info(self._get_h(), int(job_id))
         # Serialize essential fields
-        return {
-            "id": int(info.id),
-            "state": info.state_name,
-            "user": info.userid,
-            "cwd": info.cwd
-        }
+        return {"id": int(info.id), "state": info.state_name, "user": info.userid, "cwd": info.cwd}
 
     def close(self):
         self._handle = None
