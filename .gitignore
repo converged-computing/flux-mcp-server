@@ -4,3 +4,4 @@ dist
 env
 .eggs
 __pycache__
+*.db
