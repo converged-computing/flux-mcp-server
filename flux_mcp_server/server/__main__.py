@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-import asyncio
 import os
 import warnings
 from contextlib import asynccontextmanager
@@ -19,28 +18,22 @@ warnings.filterwarnings(
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="websockets.legacy")
 
 from fastapi import FastAPI
-from fastmcp.tools.tool import Tool
+from mcpserver.app import init_mcp
+from mcpserver.cli.args import populate_start_args
+from mcpserver.cli.manager import get_manager
+from mcpserver.core.config import MCPConfig
+from mcpserver.routes import *
 
 from flux_mcp_server.db import get_db
 from flux_mcp_server.events.engine import EventsEngine
 from flux_mcp_server.events.receiver import LocalReceiver
-from flux_mcp_server.registry import TOOLS
-
-from .app import init_mcp
 
 
 def get_parser():
     parser = argparse.ArgumentParser(description="Flux MCP Server")
 
-    # Server
-    parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
-    parser.add_argument("--port", type=int, default=8089, help="Port to listen on")
-    parser.add_argument(
-        "--transport", default="http", choices=["sse", "stdio", "http"], help="MCP Transport type"
-    )
-    parser.add_argument(
-        "--mount-to", default="/mcp", help="Mount path for server (defaults to /mcp)"
-    )
+    # Server start arguments (add port, host, config, function additions, etc.)
+    populate_start_args(parser)
 
     # Database
     parser.add_argument(
@@ -57,18 +50,6 @@ def get_parser():
     )
     parser.add_argument("--flux-uri", default=None, help="FLUX_URI for the local event listener")
     return parser
-
-
-def register_tools(server_instance):
-    """
-    Registers selected tools from the registry with the server.
-    We want this to fail if a function does not register.
-    """
-    print("🔌 Registering tools...")
-    for func in TOOLS:
-        tool_obj = Tool.from_function(func)
-        server_instance.add_tool(tool_obj)
-        print(f"   ✅ Registered: {func.__name__}")
 
 
 # TODO (vsoch) do we want to add other hooks?
@@ -122,58 +103,49 @@ def main():
         os.environ["FLUX_MCP_DATABASE"] = args.db_path
 
     # Get the database instance, which can be any supported in sqlalchemy.
+    # TODO try subbing in here my mcp-server library
     try:
         db = get_db()
     except Exception as e:
         logger.exit(f"🌐 Database configuration error: {e}")
 
+    if args.config is not None:
+        print(f"📖 Loading config from {args.config}")
+        cfg = MCPConfig.from_yaml(args.config)
+    else:
+        cfg = MCPConfig.from_args(args)
+
     # Initialize MCP server and register Flux functions
-    mcp = init_mcp()
-    register_tools(mcp)
+    mcp = init_mcp(cfg.exclude, cfg.include, args.mask_error_details)
+    get_manager(mcp, cfg)
 
+    # Force running with sse / http for now
     # Note from vsoch: we should not be using sse (will be deprecated)
-    if args.transport in ["sse", "http"]:
+    if cfg.server.transport not in ["sse", "http"]:
+        raise ValueError("Currently supported transports: sse/http")
 
-        mcp_app = mcp.http_app(path=args.mount_to)
+    mcp_app = mcp.http_app(path=cfg.server.path)
 
-        @asynccontextmanager
-        async def lifespan(app: FastAPI):
-            # A. Custom Startup
-            await server_startup(args, db)
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        await server_startup(args, db)
 
-            # B. Chain FastMCP Startup (Required for Task Groups/SSE)
-            # We use the router's context helper to activate the MCP app's internal logic
-            async with mcp_app.router.lifespan_context(app):
-                yield
+        # We use the router's context helper to activate the MCP app's internal logic
+        async with mcp_app.router.lifespan_context(app):
+            yield
+        await server_shutdown(db)
 
-            # C. Custom Shutdown
-            await server_shutdown(db)
+    # create ASGI app and mount to /mcp (or other destination)
+    app = FastAPI(title="Flux MCP", lifespan=lifespan)
+    app.mount("/", mcp_app)
 
-        # Create ASGI app and mount to /mcp (or other destination)
-        app = FastAPI(title="Flux MCP", lifespan=lifespan)
-        app.mount("/", mcp_app)
-
-        print(f"🌍 Flux MCP Server listening on http://{args.host}:{args.port}")
-        try:
-            uvicorn.run(app, host=args.host, port=args.port)
-            # TODO: vsoch: this doesn't work with startup / shudown
-            # mcp.run(transport=args.transport, port=args.port, host=args.host)
-        except KeyboardInterrupt:
-            print("\n👋 Shutting down...")
-
-    elif args.transport == "stdio":
-
-        async def run_stdio():
-            await server_startup(args, db)
-            try:
-                await mcp.run_stdio()
-            finally:
-                await server_shutdown(db)
-
-        try:
-            asyncio.run(run_stdio())
-        except KeyboardInterrupt:
-            pass
+    print(f"🌍 Flux MCP Server listening on http://{cfg.server.host}:{cfg.server.port}")
+    try:
+        uvicorn.run(app, host=cfg.server.host, port=cfg.server.port)
+        # TODO: vsoch: this doesn't work with startup / shudown
+        # mcp.run(transport=args.transport, port=args.port, host=args.host)
+    except KeyboardInterrupt:
+        print("\n👋 Shutting down...")
 
 
 if __name__ == "__main__":

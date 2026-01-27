@@ -26,14 +26,20 @@ Get the `FLUX_URI` so we can connect from another terminal.
 echo $FLUX_URI
 ```
 
-### Server
-
-To start the demo server, either will work:
+You likely want to install the server to your local environment.
 
 ```bash
-flux-mcp-server
+pip install -e . --break-system-packages
+```
+
+### Server
+
+To start the server, we provide it with a configuration file with function definitions for Flux:
+
+```bash
+flux-mcp-server --config ./mcpserver.yaml
 # or
-python3 -m flux_mcp_server.server
+python3 -m flux_mcp_server.server --config ./mcpserver.yaml
 ```
 
 ![img/server.png](img/server.png)
@@ -73,6 +79,12 @@ python3 ./tests/test_submit.py
    - [CLEAN]
 ```
 
+If you accidentally kill the server (and the port is still alive):
+
+```bash
+kill $(lsof -t -i :8089)
+```
+
 ### Development
 
 ```bash
@@ -95,7 +107,7 @@ pyproject-build
   - Then (custom) something with passing OAuth2-like to submit as a Flux user.
 - [x] Example: user manually submits a job, can query database for state
 - [ ] Example: Agent submits work, and can find state later.
-- [ ] Migrate to container, then Flux Operator / Kubernetes service.
+- [x] Migrate to container, then Flux Operator / Kubernetes service.
 - [ ] Tests in CI and automated build.
 
 ## License

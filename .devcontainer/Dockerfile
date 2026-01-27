@@ -10,7 +10,7 @@ ENV USERNAME=${USERNAME}
 ENV USER_UID=${USER_UID}
 ENV USER_GID=${USER_GID}
 USER root
-RUN apt-get update && apt-get install -y less python3-pip python3-venv python3-build
+RUN apt-get update && apt-get install -y less python3-pip python3-venv python3-build lsof
 
 # Add the group and user that match our ids
 RUN groupadd -g ${USER_GID} ${USERNAME} && \
