@@ -1,6 +1,7 @@
 flux_mcp_server.egg-info
 build
 dist
+certs
 env
 .eggs
 __pycache__
