@@ -34,15 +34,32 @@ pip install -e . --break-system-packages
 
 ### Server
 
-To start the server, we provide it with a configuration file with function definitions for Flux:
+To start the server, we provide it with a configuration file with function definitions for Flux.
+
+#### Without SSL
 
 ```bash
-flux-mcp-server --config ./mcpserver.yaml
+flux-mcp-server --config ./configs/mcpserver.yaml
 # or
-python3 -m flux_mcp_server.server --config ./mcpserver.yaml
+python3 -m flux_mcp_server.server --config ./configs/mcpserver.yaml
 ```
 
 ![img/server.png](img/server.png)
+
+
+#### With SSL
+
+To start with ssl, generate self-signed certificates (or production ones):
+
+```bash
+mkdir -p ./certs
+openssl req -x509 -newkey rsa:4096 -keyout ./certs/key.pem -out ./certs/cert.pem -sha256 -days 365 -nodes -subj '/CN=localhost'
+
+# This adds the equivalent of --ssl-keyfile and --ssl-certfile
+flux-mcp-server --config ./configs/mcpserver-ssl.yaml
+```
+
+### Client
 
 Next we can run a test that will submit a job, and then view the event (that was saved to our database).
 In a different terminal, export the `$FLUX_URI` you saw above.
@@ -51,9 +68,15 @@ In a different terminal, export the `$FLUX_URI` you saw above.
 export FLUX_URI=local:///tmp/flux-aG87Ma/local-0
 ```
 
-Now run the little demo:
+Now run the little demo. You can choose to use SSL or not depending on the config you used for the server. If you try to access `http` on the SSL server it will not work.
 
 ```bash
+# With SSL
+export SSL_CERT_DIR=$(pwd)/certs
+export SSL_CERT_FILE=$(pwd)/certs/cert.pem
+python3 ./tests/test_submit_ssl.py
+
+# Without SSL
 python3 ./tests/test_submit.py
 ```
 ```console

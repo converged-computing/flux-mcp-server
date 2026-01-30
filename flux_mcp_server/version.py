@@ -1,5 +1,5 @@
 # TODO: delete and completely replace with pyproject.toml
-__version__ = "0.0.11"
+__version__ = "0.0.12"
 AUTHOR = "Vanessa Sochat"
 AUTHOR_EMAIL = "vsoch@users.noreply.github.com"
 NAME = "flux-mcp-server"

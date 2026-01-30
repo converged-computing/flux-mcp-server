@@ -141,9 +141,15 @@ def main():
 
     print(f"🌍 Flux MCP Server listening on http://{cfg.server.host}:{cfg.server.port}")
     try:
-        uvicorn.run(app, host=cfg.server.host, port=cfg.server.port)
-        # TODO: vsoch: this doesn't work with startup / shudown
-        # mcp.run(transport=args.transport, port=args.port, host=args.host)
+        uvicorn.run(
+            app,
+            host=cfg.server.host,
+            port=cfg.server.port,
+            ssl_keyfile=cfg.server.ssl_keyfile,
+            ssl_certfile=cfg.server.ssl_certfile,
+            timeout_graceful_shutdown=75,
+            timeout_keep_alive=60,
+        )
     except KeyboardInterrupt:
         print("\n👋 Shutting down...")
 
