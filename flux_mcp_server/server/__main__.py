@@ -53,7 +53,7 @@ def get_parser():
 
 
 # TODO (vsoch) do we want to add other hooks?
-_HOOKS = {"instance": None}
+_HOOKS = {"engine": None}
 
 
 async def server_startup(args, db):
