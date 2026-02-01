@@ -7,7 +7,7 @@ server:
 
 tools:
   - path: flux_mcp.job.flux_handle_delegation
-  - path: flux_mcp.job.flux_submit_job
+  - path: flux_mcp_server.tools.submit.flux_submit_batch
   - path: flux_mcp.job.flux_cancel_job
   - path: flux_mcp.job.flux_get_job_info
 
