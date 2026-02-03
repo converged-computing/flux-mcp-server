@@ -30,9 +30,13 @@ def flux_submit_batch(
     cwd: str = None,
     nodes: int = 1,
     nslots: int = 1,
+    cores_per_slot: int = None,
+    gpus_per_slot: int = None,
     environment: List[str] = None,
     time_limit: str = None,
     debug: bool = False,
+    queue: str = None,
+    bank: str = None,
 ):
     """
     Submits a batch job to Flux using flux-batch
@@ -64,11 +68,15 @@ def flux_submit_batch(
             jobs,
             nodes=nodes,
             nslots=nslots,
+            cores_per_slot=cores_per_slot,
+            gpus_per_slot=gpus_per_slot,
             cwd=cwd,
             time_limit=time_limit,
             job_name=job_name,
             env=environment,
             logs_dir=logs_dir,
+            queue=queue,
+            bank=bank,
         )
 
         # Add prolog, epilogs, modules, and services
